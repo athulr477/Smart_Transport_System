@@ -1,7 +1,11 @@
 🚌 Smart Transport System
+
+
 A real-time Bus Tracking & Management System designed to modernize public transportation. This full-stack solution connects Drivers, Admins, and Passengers through a unified mobile application and a central server.
 
 🚀 Project Overview
+
+
 The Smart Transport System replaces manual logbooks with a digital architecture. It allows:
 
 Drivers to broadcast their real-time location.
@@ -11,6 +15,8 @@ Admins to manage the fleet and view live bus positions on a map.
 Passengers to track buses and see Estimated Time of Arrival (ETA).
 
 🛠️ Tech Stack
+
+
 Frontend (Mobile App)
 Framework: Flutter (Dart)
 
@@ -90,6 +96,7 @@ flutter pub get
 # Run the app
 flutter run
 🔮 Future Roadmap
+
 [ ] Google Maps Integration: Visualizing live bus movement on the Admin map.
 
 [ ] Database Integration: Connecting to Supabase/Firebase for persistent user and trip data.
