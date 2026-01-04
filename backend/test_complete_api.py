@@ -33,7 +33,7 @@ def test_all_endpoints():
         print(f"   {method} {endpoint}")
         
         try:
-            # Prepare data for POST/PATCH requests
+            # Prepare data for POST/PA~~TCH requests
             json_data = None
             if method == "POST" and endpoint == "/api/vehicles":
                 json_data = {
