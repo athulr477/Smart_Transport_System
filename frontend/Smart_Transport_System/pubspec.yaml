@@ -36,7 +36,7 @@ dependencies:
   cupertino_icons: ^1.0.8
 
   # HTTP package for backend connection
-  http: ^1.2.0
+  http: ^1.6.0
 
 dev_dependencies:
   flutter_test:

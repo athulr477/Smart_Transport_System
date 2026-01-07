@@ -1,9 +1,11 @@
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 import 'package:flutter/material.dart';
+import '../services/auth_service.dart';
+
 import 'package:smart_transport_frontend/admin/dashboard/admin_dashboard.dart';
-import 'package:smart_transport_frontend/admin/data/driver_data.dart'; // Ensure this path is correct
+import 'package:smart_transport_frontend/admin/data/driver_data.dart'; 
 import 'package:smart_transport_frontend/screens/driver_home.dart';
+// Import your service file here
+// import 'package:smart_transport_frontend/services/auth_service.dart'; 
 
 class LoginScreen extends StatefulWidget {
   final String userType; // 'admin' or 'driver'
@@ -17,55 +19,60 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _idController = TextEditingController(); 
   final _passwordController = TextEditingController();
+  bool _isLoading = false;
 
-  // Changed to async to support HTTP requests
   Future<void> _handleLogin() async {
     final inputId = _idController.text.trim();
     final password = _passwordController.text.trim();
 
-    // 1. Admin Login (Kept Local)
-    if (widget.userType == 'admin') {
-      if (inputId == 'admin' && password == 'admin123') {
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const AdminDashboard()));
-      } else {
-        _showError('Invalid Admin Credentials');
-      }
-    } else {
-      // 2. Driver Login (Connects to Python Backend)
-      try {
-        // Use 10.0.2.2 for Android Emulator, or localhost for Web/iOS
-        final url = Uri.parse('http://10.0.2.2:8000/driver-login?driver_id=$inputId&password=$password');
-        
-        print("Connecting to: $url"); // Debugging
+    if (inputId.isEmpty || password.isEmpty) {
+      _showError('Please fill in all fields');
+      return;
+    }
 
-        final response = await http.post(url);
+    setState(() => _isLoading = true);
 
-        if (response.statusCode == 200) {
-          final data = json.decode(response.body);
+    try {
+      // 1. Admin Login (Local logic)
+      if (widget.userType == 'admin') {
+        if (inputId == 'admin' && password == 'admin123') {
+          Navigator.pushReplacement(
+            context, 
+            MaterialPageRoute(builder: (_) => const AdminDashboard())
+          );
+        } else {
+          _showError('Invalid Admin Credentials');
+        }
+      } 
+      // 2. Driver Login (Using AuthService)
+      else {
+        // Calling your AuthService method
+        final response = await AuthService.driverLogin(inputId, password);
 
-          if (data['success'] == true) {
-            // Success! Create driver object from server data
-            final driver = Driver(
-              id: inputId,
-              name: data['name'],
-              licenseNumber: 'PENDING', // You can fetch this later if needed
-              password: password,
-              assignedBusId: data['bus_id'],
+        if (response["success"] == true) {
+          // Map the response data to your Driver model
+          final driver = Driver(
+            id: inputId,
+            name: response['name'] ?? 'Driver',
+            licenseNumber: 'PENDING',
+            password: password,
+            assignedBusId: response['bus_id'],
+          );
+
+          if (mounted) {
+            Navigator.pushReplacement(
+              context, 
+              MaterialPageRoute(builder: (_) => DriverHomeScreen(driver: driver))
             );
-
-            if (mounted) {
-              Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => DriverHomeScreen(driver: driver)));
-            }
-          } else {
-            _showError(data['error']); // Show error from Python server
           }
         } else {
-          _showError('Server Error: ${response.statusCode}');
+          _showError(response["error"] ?? "Login failed");
         }
-      } catch (e) {
-        print("Connection Error: $e");
-        _showError('Could not connect to Server. Is Python running?');
       }
+    } catch (e) {
+      _showError("Server error: $e");
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -109,8 +116,10 @@ class _LoginScreenState extends State<LoginScreen> {
               width: double.infinity,
               height: 50,
               child: ElevatedButton(
-                onPressed: _handleLogin,
-                child: const Text("LOGIN"),
+                onPressed: _isLoading ? null : _handleLogin,
+                child: _isLoading 
+                  ? const CircularProgressIndicator(color: Colors.white) 
+                  : const Text("LOGIN"),
               ),
             ),
           ],
